@@ -1,3 +1,4 @@
+
 #include <EEPROM.h>
 
 bool getbit(uint8_t b, int bitnum) {
@@ -15,6 +16,10 @@ struct beat {
   }
 };
 
+int phase = 0;
+int leng;
+uint8_t snhit[10];
+
 void setup() {
   Serial.begin(9600);
   delay(200);
@@ -22,8 +27,6 @@ void setup() {
   //EEPROM.write(0, 0b00001001); //4(0000100), 7(111), 5(101), 0(000)
   //EEPROM.write(1, 0b11101000);
   //EEPROM.write(2, 0b11111111);
-
-  uint8_t beatcount, sn, kk, ht;
 
   //b1 - 7 bits for time between hits, 1 bit joins with other byte to store velocities
   //0000000 000 000 000
@@ -42,12 +45,5 @@ void setup() {
 }
 
 void loop() {
-  if (Serial.available() > 0) {
-    // read the incoming byte:
-    char incomingByte = (char)Serial.read();
 
-    // say what you got:
-    Serial.print("I received: ");
-    Serial.println(incomingByte);
-  }
 }
