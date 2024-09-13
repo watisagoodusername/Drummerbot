@@ -1,4 +1,3 @@
-
 #include <EEPROM.h>
 
 bool getbit(uint8_t b, int bitnum) {
@@ -6,13 +5,26 @@ bool getbit(uint8_t b, int bitnum) {
 }
 
 struct beat {
-  uint8_t beatcount, sn, kk, ht;
+  uint8_t byte1, byte2, beatstonext, sn, kk, ht;
 
   beat (uint8_t b1, uint8_t b2) {
-    beatcount = 0b1111111 & (b1 >> 1); //beatcount is first 7 bits of first byte
+    byte1 = b1;
+    byte2 = b2;
+
+    beatstonext = 0b1111111 & (b1 >> 1); //beatstonext is first 7 bits of first byte
     sn = ((1 & b1) * 4) + (0b11 & (b2 >> 6));//snare is last bit of byte 1 in 4s place and first 2 bits of byte 2
     kk = (0b111 & (b2 >> 3)); // kick is 3rd to 5th bit byte 2
     ht = (0b111 & b2); // hat is 6th to 8th bit of byte 2
+  }
+
+  beat (uint8_t _beatstonext, uint8_t _sn, uint8_t _kk, uint8_t _ht) {
+    beatstonext = _beatstonext;
+    sn = _sn;
+    kk = _kk;
+    ht = _ht;
+
+    byte1 = (beatstonext << 1) + 1 && (sn >> 2);
+    byte2 = (sn << 6) + (kk << 3) + ht;
   }
 };
 
@@ -24,24 +36,21 @@ void setup() {
   Serial.begin(9600);
   delay(200);
 
-  //EEPROM.write(0, 0b00001001); //4(0000100), 7(111), 5(101), 0(000)
-  //EEPROM.write(1, 0b11101000);
-  //EEPROM.write(2, 0b11111111);
+  bool lastbeat = false;
+  int i = 0;
+  while (!lastbeat) { //read all values
+    beat currentbeat = beat(EEPROM.read(2*i), EEPROM.read(2*i+1));
+    if (currentbeat.beatstonext == 0){
+      lastbeat = true;
+    }
+    Serial.print(currentbeat.beatstonext); Serial.print(" ");
+    Serial.print(currentbeat.sn); Serial.print(" ");
+    Serial.print(currentbeat.kk); Serial.print(" ");
+    Serial.print(currentbeat.ht); Serial.print(" ");
+    Serial.println();
 
-  //b1 - 7 bits for time between hits, 1 bit joins with other byte to store velocities
-  //0000000 000 000 000
-  // delay  sn  kk  ht
-
-  uint8_t b1 = EEPROM.read(0);
-  uint8_t b2 = EEPROM.read(1);
-
-  beat nextbeat = beat(b1, b2);
-
-  Serial.println(nextbeat.ht);
-  for (int i = 7; i >= 0; i--) {
-    Serial.print(getbit(nextbeat.ht, i));
+    i++;
   }
-  Serial.println();
 }
 
 void loop() {
