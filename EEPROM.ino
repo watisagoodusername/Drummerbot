@@ -28,10 +28,6 @@ struct beat {
   }
 };
 
-int phase = 0;
-int leng;
-uint8_t snhit[10];
-
 void setup() {
   Serial.begin(9600);
   delay(200);
