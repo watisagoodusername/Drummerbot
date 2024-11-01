@@ -28,49 +28,38 @@ struct beat {
   }
 };
 
-const int leng = 16;
-uint8_t snhit[leng];
-uint8_t kkhit[leng];
-uint8_t hthit[leng];
+uint8_t leng;
+uint8_t *snhit;
+uint8_t *kkhit;
+uint8_t *hthit;
 
 int count = 0;
+
+bool fstloop = true;
 
 void setup() {
   Serial.begin(9600);
   delay(200);
 
-  //EEPROM.write(0, 0b00001001); //4(0000100), 7(111), 5(101), 0(000)
-  //EEPROM.write(1, 0b11101000);
-  //EEPROM.write(2, 0b11111111);
-
-  //b1 - 7 bits for time between hits, 1 bit joins with other byte to store velocities
-  //0000000 000 000 000
-  // delay  sn  kk  ht
-
-  /*beat todrum = beat(0b00001001, 0b11101000);
-
-  Serial.print(todrum.beatstonext);
-  Serial.print(" ");
-  Serial.print(todrum.sn);
-  Serial.print(" ");
-  Serial.print(todrum.kk);
-  Serial.print(" ");
-  Serial.print(todrum.ht);
-  Serial.println();
-
-  beat tobyte = beat(todrum.beatstonext, todrum.sn, todrum.kk, todrum.ht);
-
-  for (int i = 7; i >= 0; i--) {
-    Serial.print(getbit(tobyte.byte1, i));
-  } Serial.print(" ");
-  for (int i = 7; i >= 0; i--) {
-    Serial.print(getbit(tobyte.byte2, i));
-  } Serial.println(" ");*/
-
 }
 
 void loop() {
   if (Serial.available() > 0) {
+    if (fstloop) {
+      String str = Serial.readStringUntil('\n');
+      leng = str.toInt();
+      snhit = new uint8_t[leng];
+      kkhit = new uint8_t[leng];
+      hthit = new uint8_t[leng];
+
+      fstloop = false;
+
+      Serial.print("length is: ");
+      Serial.println(leng);
+      Serial.println();
+    }
+
+    else {
       int incomingbyte = Serial.read();// read the incoming byte 
       incomingbyte -= 48; // char to int, since 0 is 48 and 9 is 57
               
@@ -91,67 +80,77 @@ void loop() {
         }
 
         Serial.print(count);
-    }
-    if (count == 3 * leng) {//once it has recieved every track do calculations on them
-      count ++;// so this only runs once
+      }
+      if (count == 3 * leng) {//once it has recieved every track do calculations on them
+        count ++;// so this only runs once
 
-      //print lists
-      Serial.println();
-      for(int i = 0; i < leng; i++){
-        Serial.print(snhit[i]);
-      } Serial.println();
+        //print lists
+        Serial.println();
+        for(int i = 0; i < leng; i++){
+          Serial.print(snhit[i]);
+        } Serial.println();
 
-      for(int i = 0; i < leng; i++){
-        Serial.print(kkhit[i]);
-      } Serial.println();
+        for(int i = 0; i < leng; i++){
+          Serial.print(kkhit[i]);
+        } Serial.println();
 
-      for(int i = 0; i < leng; i++){
-        Serial.print(hthit[i]);
-      } Serial.println();
+        for(int i = 0; i < leng; i++){
+          Serial.print(hthit[i]);
+        } Serial.println();
 
-      //convert to bytes for the eeprom 
+        //convert to bytes for the eeprom 
 
-      int beattimes[leng] = { 0 };// leng is the maximum amount of hits
-      int beattimeslen = 0;
+        const int l = leng;
 
-      int prev = 0;
-      for (int i = 4; i < leng; i++) {// calculate beats in between hits and store to beattimes[]
-        if (snhit[i] != 0 or kkhit[i] != 0 or hthit[i] != 0) {
-          beattimeslen++;
-          beattimes[beattimeslen - 1] = i - prev;
+        int beattimes[l] = { 0 };// leng is the maximum amount of hits
+        int beattimeslen = 0;
 
-          prev = i;
-        }
-      } beattimeslen++;
+        int prev = 0;
+        for (int i = 1; i < leng; i++) {// calculate beats in between hits and store to beattimes[]
+          if (snhit[i] != 0 or kkhit[i] != 0 or hthit[i] != 0) {
+            beattimeslen++;
+            beattimes[beattimeslen - 1] = i - prev;
 
-      Serial.println();
-      int b = 0;
-      for (int i = 0; i < beattimeslen; i++)  {
-        //Serial.print(beattimes[i]);
-        beat currentbeat = beat(beattimes[i], snhit[b], kkhit[b], hthit[b]);
-        b += beattimes[i];
+            prev = i;
+          }
+        } beattimeslen++;
 
-        // dont run this one too often
-        EEPROM.write(2*i, currentbeat.byte1);
-        EEPROM.write(2*i + 1, currentbeat.byte2);
-
-        Serial.print(currentbeat.beatstonext);
-        Serial.print(" ");
-        Serial.print(currentbeat.sn);
-        Serial.print(" ");
-        Serial.print(currentbeat.kk);
-        Serial.print(" ");
-        Serial.print(currentbeat.ht);
         Serial.println();
 
-        for (int i = 7; i >= 0; i--) {
-          Serial.print(getbit(currentbeat.byte1, i));
-        } Serial.print(" ");
-        for (int i = 7; i >= 0; i--) {
-          Serial.print(getbit(currentbeat.byte2, i));
-        } Serial.println(" ");
+        //EEPROM.write(0, leng);
+
+        Serial.println(leng);
+        Serial.println();
+
+        int b = 0;
+        for (int i = 0; i < beattimeslen; i++)  {
+          //Serial.print(beattimes[i]);
+          //Serial.println();
+          beat currentbeat = beat(beattimes[i], snhit[b], kkhit[b], hthit[b]);
+          b += beattimes[i];
+
+          // dont run this one too often
+          //EEPROM.write(2*i + 1, currentbeat.byte1);
+          //EEPROM.write(2*i + 2, currentbeat.byte2);
+
+          Serial.print(currentbeat.beatstonext);
+          Serial.print(" ");
+          Serial.print(currentbeat.sn);
+          Serial.print(" ");
+          Serial.print(currentbeat.kk);
+          Serial.print(" ");
+          Serial.print(currentbeat.ht);
+          Serial.println();
+
+          for (int i = 7; i >= 0; i--) {
+            Serial.print(getbit(currentbeat.byte1, i));
+          } Serial.print(" ");
+          for (int i = 7; i >= 0; i--) {
+            Serial.print(getbit(currentbeat.byte2, i));
+          } Serial.println(" ");
+        }
+        //EEPROM.write(beattimeslen + 1, 0);
       }
-      
     }
   }
 }
