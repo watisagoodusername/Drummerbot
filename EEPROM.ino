@@ -33,9 +33,9 @@ void setup() {
   delay(200);
 
   bool lastbeat = false;
-  int i = 0;
+  int i = 1;
   while (!lastbeat) { //read all values
-    beat currentbeat = beat(EEPROM.read(2*i), EEPROM.read(2*i+1));
+    beat currentbeat = beat(EEPROM.read(2*i - 1), EEPROM.read(2*i));
     if (currentbeat.beatstonext == 0){
       lastbeat = true;
     }
