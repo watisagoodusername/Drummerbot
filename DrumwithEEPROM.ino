@@ -65,7 +65,7 @@ unsigned long prevtime;
 int bpm;
 int beattime;
 int count = 0;
-int readloc = 0;
+int readloc = 2;
 beat currenthit(1, 0, 0, 0);
 beat prevhit(1, 0, 0, 0);
 
@@ -90,38 +90,33 @@ void loop() {
   // wait a little
   // reset motors to currenthit
   // wait prevhit time
-
-  if(!(time%beattime) && time != prevtime){
-    prevtime = time;
-
-    if (count == prevhit.beatstonext){
-      snare.hitDown(currenthit.sn);
-      kick.hitDown(currenthit.kk);
-      hat.hitDown(currenthit.ht);
-
-      Serial.print(currenthit.sn); Serial.print(" ");
-      Serial.print(currenthit.kk); Serial.print(" ");
-      Serial.print(currenthit.ht); Serial.println(" ");
-
-      prevhit = currenthit;
-      currenthit = beat(EEPROM.read(readloc),EEPROM.read(readloc + 1));
-      
-      readloc += 2;
-      
-      delay(180);
-
-      snare.reset(currenthit.sn);
-      kick.reset(currenthit.kk);
-      hat.reset(currenthit.ht);
-      count = 0;
-    } else {
-      Serial.println("0 0 0");
+  if (currenthit.beatstonext > 0) {
+    if(!(time%beattime) && time != prevtime){
+      prevtime = time;
+  
+      if (count == prevhit.beatstonext){
+        snare.hitDown(currenthit.sn);
+        kick.hitDown(currenthit.kk);
+        hat.hitDown(currenthit.ht);
+  
+        Serial.print(currenthit.beatstonext); Serial.print(" ");
+        Serial.print(currenthit.sn); Serial.print(" ");
+        Serial.print(currenthit.kk); Serial.print(" ");
+        Serial.print(currenthit.ht); Serial.println(" ");
+  
+        prevhit = currenthit;
+        currenthit = beat(EEPROM.read(readloc - 1),EEPROM.read(readloc));
+        
+        readloc += 2;
+        
+        delay(180);
+  
+        snare.reset(currenthit.sn);
+        kick.reset(currenthit.kk);
+        hat.reset(currenthit.ht);
+        count = 0;
+      }
+      count ++; 
     }
-    count ++;
+   }
   }
-  /*else if (!((time+180)%beattime)){
-    if (count == prevhit.beatstonext){
-      kick.reset(1);
-      snare.reset(1);
-    }*/
-}
