@@ -117,7 +117,7 @@ void loop() {
 
         Serial.println();
 
-        //EEPROM.write(0, leng);
+        EEPROM.write(0, leng);
 
         Serial.println(leng);
         Serial.println();
@@ -130,8 +130,8 @@ void loop() {
           b += beattimes[i];
 
           // dont run this one too often
-          //EEPROM.write(2*i + 1, currentbeat.byte1);
-          //EEPROM.write(2*i + 2, currentbeat.byte2);
+          EEPROM.write(2*i + 1, currentbeat.byte1);
+          EEPROM.write(2*i + 2, currentbeat.byte2);
 
           Serial.print(currentbeat.beatstonext);
           Serial.print(" ");
@@ -149,7 +149,10 @@ void loop() {
             Serial.print(getbit(currentbeat.byte2, i));
           } Serial.println(" ");
         }
-        //EEPROM.write(beattimeslen + 1, 0);
+        
+        delete snhit;
+        delete kkhit;
+        delete hthit;
       }
     }
   }
